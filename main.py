@@ -30,14 +30,15 @@ class ChatBot:
     def generate_response(self, user_input):
         new_user_input_ids = self.image_var_generator.tokenizer.encode(
             user_input + self.image_var_generator.tokenizer.eos_token, return_tensors='pt')
-        bot_input_ids = torch.cat([self.chat_history, new_user_input_ids],
-                                  dim=-1) if self.chat_history is not None else new_user_input_ids
-        chat_history_ids = self.image_var_generator.model.generate(bot_input_ids, max_length=1000,
-                                                                   pad_token_id=self.image_var_generator.tokenizer.eos_token_id,
-                                                                   do_sample=True, num_return_sequences=1)
+        if self.chat_history is not None:
+            bot_input_ids = torch.cat(
+                [self.chat_history, new_user_input_ids], dim=-1)
+        else:
+            bot_input_ids = new_user_input_ids
+        chat_history_ids = self.image_var_generator.model.generate(
+            bot_input_ids, max_length=1000, pad_token_id=self.image_var_generator.tokenizer.eos_token_id, do_sample=True, num_return_sequences=1)
         self.chat_history = bot_input_ids
-        return self.image_var_generator.tokenizer.decode(chat_history_ids[:, bot_input_ids.shape[-1]:][0],
-                                                         skip_special_tokens=True)
+        return self.image_var_generator.tokenizer.decode(chat_history_ids[:, bot_input_ids.shape[-1]:][0], skip_special_tokens=True)
 
     def engage_with_users(self, num_lines):
         for _ in range(num_lines):
